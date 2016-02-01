@@ -13,11 +13,11 @@ import com.example.summer.rt_audio.R;
 public class AudioRx {
 
 
-    private int DEFAULT_BUFFERSIZE_WORDS = 2048;
-    private int DEFAULT_WORDSIZE_BYTES = 2;
-    private int DEFAULT_SAMPRATE_HZ = 8000;
-    private int DEFAULT_CHANNELCONFIG = AudioFormat.CHANNEL_IN_MONO;
-    private int DEFAULT_AUDIOENCODEING = AudioFormat.ENCODING_PCM_16BIT;
+    private final int DEFAULT_BUFFERSIZE_WORDS = 2048;
+    private final int DEFAULT_WORDSIZE_BYTES = 2;
+    private final int DEFAULT_SAMPRATE_HZ = 8000;
+    private final int DEFAULT_CHANNELCONFIG = AudioFormat.CHANNEL_IN_MONO;
+    private final int DEFAULT_AUDIOENCODEING = AudioFormat.ENCODING_PCM_16BIT;
 
     private int wordSize_bytes;
     private int bufferSize_words;

@@ -64,4 +64,14 @@
         android:layout_alignStart="@+id/sumSqEditText"
         android:text="Log 10 here" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tx"
+        android:id="@+id/btn_Tx"
+        android:onClick="txButtonClick"
+        android:layout_below="@+id/logEditText"
+        android:layout_toLeftOf="@+id/logEditText"
+        android:layout_toStartOf="@+id/logEditText" />
+
 </RelativeLayout>

@@ -17,6 +17,7 @@ import java.util.logging.LogRecord;
 
 public class MainActivity extends AppCompatActivity {
     private AudioRx receiver;
+    private AudioTx transmitter;
 
     private EditText sumSqEditText;
     private EditText logEditText;
@@ -41,8 +42,9 @@ public class MainActivity extends AppCompatActivity {
         editTextUpdateHandler = new Handler();
 
 
-        //Set up Rx
+        //Set up Rx and Tx
         receiver = new AudioRx();
+        transmitter = new AudioTx();
 
 
     }
@@ -63,6 +65,15 @@ public class MainActivity extends AppCompatActivity {
             receiver.startRx();
             editTextUpdateHandler.postDelayed(updateTextBoxes, updateTextBoxInterval_ms);
         }
+
+    }
+
+    public void txButtonClick (View view)
+    {
+        byte[] txPacket = {1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0};
+
+        transmitter.modulatePacket(txPacket, txPacket.length);
+        transmitter.playPacket();
 
     }
 
