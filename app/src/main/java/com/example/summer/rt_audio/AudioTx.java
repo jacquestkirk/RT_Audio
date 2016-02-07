@@ -21,6 +21,9 @@ public class AudioTx {
 
     private final double DEFAULT_BAUD_RATE_Hz = 2;
     private final double DEFAULT_FREQ_DEV_Hz = 10;
+    private final byte[] DEFAULT_TRAINING_SEQUENCE ={0x55, 0x55};
+
+
 
 
     private float centerFreq_Hz;
@@ -32,7 +35,7 @@ public class AudioTx {
     private int bufferSize_bytes;
     private double baud_rate_hz;
     private double freq_dev_hz;
-
+    private byte[] training_sequence;
 
     private AudioTrack generator;
     private byte packet_byte[];
@@ -55,6 +58,7 @@ public class AudioTx {
         freq_dev_hz = DEFAULT_FREQ_DEV_Hz;
 
 
+        training_sequence = DEFAULT_TRAINING_SEQUENCE;
 
         //initialize the packet
         //generateCwTone();
@@ -100,6 +104,38 @@ public class AudioTx {
         }*/
 
     }
+
+    public void modulatePacket(String packet)
+    {
+        //todo: Add checks to make sure that Packets are the correct length.
+
+        //Add training sequence to the beginning of the packet
+        String training_sequence_str = new String(training_sequence);
+        packet =  training_sequence_str + packet;
+
+        int packet_len_bytes = packet.length();
+        byte[] byte_packet = packet.getBytes();
+
+        byte[] bit_packet = new byte[packet_len_bytes*8];
+
+
+
+        for (int i=0; i < packet_len_bytes; i++)
+        {
+            //convert each bit into a new entry
+            bit_packet[8*i+7]= (byte)(((int)byte_packet[i] & 0b00000001)>>0);
+            bit_packet[8*i+6]= (byte)(((int)byte_packet[i] & 0b00000010)>>1);
+            bit_packet[8*i+5]= (byte)(((int)byte_packet[i] & 0b00000100)>>2);
+            bit_packet[8*i+4]= (byte)(((int)byte_packet[i] & 0b00001000)>>3);
+            bit_packet[8*i+3]= (byte)(((int)byte_packet[i] & 0b00010000)>>4);
+            bit_packet[8*i+2]= (byte)(((int)byte_packet[i] & 0b00100000)>>5);
+            bit_packet[8*i+1]= (byte)(((int)byte_packet[i] & 0b01000000)>>6);
+            bit_packet[8*i+0]= (byte)(((int)byte_packet[i] & 0b10000000)>>7);
+        }
+
+        modulatePacket(bit_packet, 8*packet_len_bytes);
+    }
+
 
     public void modulatePacket(byte[] binary_data, int packet_len)
     {

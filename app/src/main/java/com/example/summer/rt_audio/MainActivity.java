@@ -70,9 +70,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void txButtonClick (View view)
     {
-        byte[] txPacket = {1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0};
+        byte[] txPacket = {1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,0,1,1,0,1,1};
 
-        transmitter.modulatePacket(txPacket, txPacket.length);
+        transmitter.setBaudRate_Hz(10);
+        transmitter.modulatePacket("hi");
         transmitter.playPacket();
 
     }
@@ -94,9 +95,6 @@ public class MainActivity extends AppCompatActivity {
             {
                 editTextUpdateHandler.postDelayed(updateTextBoxes,updateTextBoxInterval_ms);
             }
-
-
-
         }
     };
 
