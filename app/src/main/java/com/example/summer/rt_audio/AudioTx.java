@@ -12,15 +12,15 @@ import android.media.AudioTrack;
  */
 public class AudioTx {
 
-    private final float DEFAULT_CENTER_FREQ_HZ = 300;
-    private final int DEFAULT_SAMPRATE_HZ = 8000;
+    private final float DEFAULT_CENTER_FREQ_HZ = 10500; //300;
+    private final int DEFAULT_SAMPRATE_HZ = 44100; //8000;
     private final int DEFAULT_CHANNELCONFIG = AudioFormat.CHANNEL_OUT_MONO;
     private final int DEFAULT_AUDIOENCODEING = AudioFormat.ENCODING_PCM_16BIT;
     private final int DEFAULT_BUFFERSIZE_WORDS = 2048;
     private final int DEFAULT_WORDSIZE_BYTES = 2;
 
-    private final double DEFAULT_BAUD_RATE_Hz = 2;
-    private final double DEFAULT_FREQ_DEV_Hz = 10;
+    private final double DEFAULT_BAUD_RATE_Hz = 1000;//2;
+    private final double DEFAULT_FREQ_DEV_Hz = 500;//10;
     private final byte[] DEFAULT_TRAINING_SEQUENCE ={0x55, 0x55};
 
 

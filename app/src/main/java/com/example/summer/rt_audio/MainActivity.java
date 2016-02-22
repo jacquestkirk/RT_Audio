@@ -72,8 +72,8 @@ public class MainActivity extends AppCompatActivity {
     {
         byte[] txPacket = {1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,0,1,1,0,1,1};
 
-        transmitter.setBaudRate_Hz(10);
-        transmitter.modulatePacket("hi");
+        //transmitter.setBaudRate_Hz(10);
+        transmitter.modulatePacket("BLOWME");
         transmitter.playPacket();
 
     }

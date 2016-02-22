@@ -4,7 +4,7 @@
 
 sample_rate = 44100;
 f_center_hz = sample_rate/4;
-bit_rate = 9000;
+bit_rate = 1000;
 f_dev = bit_rate/2;
 bw_carson = bit_rate + 2*f_dev;
 
@@ -13,8 +13,8 @@ noise_pwr = 0.15;
 iq_filt_len = 30;
 f_pass_hz = bw_carson/2;
 f_stop_hz = 2*f_center_hz - bw_carson/2;
-f_pass_norm = f_pass_hz/(sample_rate/2);
-f_stop_norm = f_stop_hz/(sample_rate/2);
+f_pass_norm = max(0.2, f_pass_hz/(sample_rate/2));
+f_stop_norm = min(0.6, f_stop_hz/(sample_rate/2));
 df_trans_hz = f_stop_hz - f_pass_hz;
 
 rx_filt_len = 30;
@@ -29,9 +29,10 @@ f_stop_hi_norm = f_stop_hi_hz/(sample_rate/2);
 
 
 mesg = [170 170 66 76 79 87 77 69];
-mesg = repmat(mesg,1,1001);
+mesg = repmat(mesg,1,100);
 %t_s = 0:(1/sample_rate):(0.064-1/sample_rate);
 t_s = [1:length(mesg)*8*sample_rate/bit_rate-1]*1/sample_rate;
+t_s = [1:length(data)]*1/sample_rate;
 mesg_bits = dec2bin(mesg);
 mesg_bits_T = transpose(mesg_bits);
 sig_sample = zeros(size(t_s));
@@ -41,18 +42,22 @@ f2_hz = f_center_hz + f_dev;
 
 
 %% create transmit signal
-for i = (1:length(t_s))
-  if mesg_bits_T(round(i/(sample_rate/bit_rate)+0.5)) == '0'
-    sig_sample(i) = sin(2*pi*f1_hz*t_s(i));
-    bit_sample(i) = 0;
-  elseif mesg_bits_T(round(i/(sample_rate/bit_rate)+0.5)) == '1'
-    sig_sample(i) = sin(2*pi*f2_hz*t_s(i));
-    bit_sample (i) = 1;
-  end
-end 
+if(false)
+    
+    for i = (1:length(t_s))
+      if mesg_bits_T(round(i/(sample_rate/bit_rate)+0.5)) == '0'
+        sig_sample(i) = sin(2*pi*f1_hz*t_s(i));
+        bit_sample(i) = 0;
+      elseif mesg_bits_T(round(i/(sample_rate/bit_rate)+0.5)) == '1'
+        sig_sample(i) = sin(2*pi*f2_hz*t_s(i));
+        bit_sample (i) = 1;
+      end
+    end 
 
 
-sig_sample = sig_sample + noise_pwr*randn(size(t_s));
+    sig_sample = sig_sample + noise_pwr*randn(size(t_s));
+end
+sig_sample = data';
 
 %% Create and apply rx filter
 % figure(3)
