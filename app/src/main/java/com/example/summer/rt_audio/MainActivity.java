@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
             receiver.stopRx();
         }
         else{
+            receiver.loadDebugRxCsv(getResources().openRawResource(R.raw.sim_dat));
             receiver.startRx();
             editTextUpdateHandler.postDelayed(updateTextBoxes, updateTextBoxInterval_ms);
         }

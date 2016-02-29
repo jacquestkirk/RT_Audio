@@ -5,18 +5,35 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.os.Environment;
+import android.renderscript.ScriptGroup;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.content.res.Resources;
+import android.content.Context;
+
 
 
 import com.example.summer.rt_audio.R;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+
 /**
  * Created by Summer on 1/31/2016.
  */
 public class AudioRx {
 
+    private final boolean USE_DEBUG_CSV_DATA = true;
+    private final boolean WRITE_DEBUG_CSV_DATA = true;
 
     private final int DEFAULT_BUFFERSIZE_WORDS = 3584;
     private final int DEFAULT_WORDSIZE_BYTES = 2;
@@ -27,6 +44,8 @@ public class AudioRx {
     private final double DEFAULT_DEVFREQ_HZ = 5000;
     private final double DEFAULT_BAUDRATE = 1000;
 
+
+
     private int wordSize_bytes;
     private int bufferSize_words;
     private int sampleRate_Hz;
@@ -36,6 +55,8 @@ public class AudioRx {
     private double centerFreq_Hz;
     private double devFreq_Hz;
     private double baudRate_Hz;
+
+    private InputStream debugRxCsv;
 
     /*private final double[] iqFilt= {                       0,//9kHz filter
                                     -0.0028,
@@ -104,7 +125,11 @@ public class AudioRx {
                     -0.0002,
                     -0.0000};
 
-    private final double[] freqFilt = {0.2,0.2,0.2,0.2,0.2};
+    private final double[] freqFilt = {0.023,0.023,0.023,0.023,0.023,0.023,0.023,0.023,0.023,0.023,
+                                        0.023,0.023,0.023,0.023,0.023,0.023,0.023,0.023,0.023,0.023,
+                                        0.023,0.023,0.023,0.023,0.023,0.023,0.023,0.023,0.023,0.023,
+                                        0.023,0.023,0.023,0.023,0.023,0.023,0.023,0.023,0.023,0.023,
+                                        0.023,0.023,0.023,0.023};
 
     private AudioRecord recorder;
 
@@ -158,6 +183,27 @@ public class AudioRx {
         {}
     };
 
+    public void loadDebugRxCsv(InputStream inputStream)
+    {
+        debugRxCsv = inputStream;
+    }
+
+    private void getDebugRxFromCsv(short [] outputData)
+    {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(debugRxCsv));
+
+        try {
+            for(int i=0; i<2*bufferSize_words; i++) {
+                String thisline = reader.readLine();
+                outputData[i] = Short.parseShort(thisline);
+            }
+            reader.close();
+        } catch (IOException ex) {
+            throw new RuntimeException("Error reading csv file");
+        }
+
+    }
+
     private void processData()
     {
         //To ensure that we capture the full packet, capture two buffers worth and cycle through
@@ -178,10 +224,69 @@ public class AudioRx {
 
         short [] demodData = new short[2*bufferSize_words];
         short [] result = new short[2*bufferSize_words];;
+
+        if(USE_DEBUG_CSV_DATA) {
+            getDebugRxFromCsv(demodData);  //ditch all the data we actually collected and use debug data instead
+        }
+
         demodulate(demodData,result);
         //Slice()
 
         buffer1 = buffer2;
+
+    }
+
+    private void writeToCsvFile(double[] data, String name )
+    {
+        File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PODCASTS)+"/AudioRxDebugFiles");
+        boolean success;
+        if(!folder.exists())
+        {
+            try{
+                success = folder.mkdir();
+            }catch(Exception e)
+            {
+                success = false;
+            }
+
+            boolean junk = true;
+        }
+
+
+
+        String filename =  folder.toString() + "/" + name +".csv";
+
+        File file = new File(filename);
+        if(!file.exists())
+        {
+            boolean junk = true;
+            try {
+                success = file.createNewFile();
+                junk = false;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            FileWriter fileWriter = new FileWriter( filename );
+
+            for( int i=0; i<2*bufferSize_words; i++)
+            {
+                fileWriter.write(Double.toString(data[i]));
+                fileWriter.write("\r\n");
+            }
+
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+
+        //FileOutputStream fileOutputStream = openFileOutput(filename);
+        //OutputStreamWriter outputStreamWriter = new OutputStreamWriter(filename);
+
 
     }
 
@@ -218,8 +323,15 @@ public class AudioRx {
             }
         }
 
+
+        /*if(WRITE_DEBUG_CSV_DATA) {
+            writeToCsvFile(idat_filt, "Idat");
+            writeToCsvFile(qdat_filt, "Qdat");
+        }*/
+
         //calculate phase
         double [] phase = new double[2*bufferSize_words];
+        //double [] phaseunwrap = new double[2*bufferSize_words];
         for (int i=0; i< 2*bufferSize_words; i++)
         {
             phase[i] = Math.atan(qdat_filt[i] / idat_filt[i]);
@@ -230,7 +342,32 @@ public class AudioRx {
             {
                 phase[i] += Math.PI;
             }
+
+            //unwrap phase
+
+
+            //if(i > 0)
+            //{
+            //    double phase_change = phase[i]-phase[i-1];
+            //    if(phase_change < -2)
+            //    {
+            //        phaseunwrap[i] = phase[i]  + 2*Math.PI;
+            //    }
+            //
+            //}
+            //else
+            //{
+            //    phaseunwrap[i] = 0;
+            //}
+
         }
+
+        if(WRITE_DEBUG_CSV_DATA) {
+            writeToCsvFile(phase, "Phase");
+            //writeToCsvFile(phaseunwrap, "PhaseUnwrap");
+        }
+
+
 
         //calculate frequency
         double [] freq = new double[2*bufferSize_words];
@@ -238,7 +375,21 @@ public class AudioRx {
         for(int i=1; i< 2*bufferSize_words; i++)
         {
             freq[i] = phase[i]-phase[i-1];
+
+            //check if we went over a phase wrap transition
+            if(freq[i]< -4) //we should be moving forward in phase, if we slip backwards by more than 4 radians, then add 2 pi to unwrap
+            {
+                freq[i] = freq[i] + 2* Math.PI;
+            }else if(freq[i]> 5) //different limit for slipping forward by more than 5 radians.
+            {
+                freq[i] = freq[i] - 2* Math.PI;
+            }
+
             freq[i] = freq[i]* sampleRate_Hz/(2*Math.PI);
+        }
+
+        if(WRITE_DEBUG_CSV_DATA) {
+            writeToCsvFile(freq, "Freq");
         }
 
         //filter frequency
@@ -258,8 +409,11 @@ public class AudioRx {
                 debugDat [i] = (short) (10000 * (freq_filt[i] + 2));
             }
         }
+        if(WRITE_DEBUG_CSV_DATA) {
+            writeToCsvFile(freq_filt, "FreqFilt");
+        }
 
-        playDebug(debugDat, 3, 1.5);
+        //playDebug(debugDat, 3, 1.5);
     }
 
 

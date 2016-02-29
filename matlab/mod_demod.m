@@ -29,10 +29,10 @@ f_stop_hi_norm = f_stop_hi_hz/(sample_rate/2);
 
 
 mesg = [170 170 66 76 79 87 77 69];
-mesg = repmat(mesg,1,100);
+mesg = repmat(mesg,1,5);
 %t_s = 0:(1/sample_rate):(0.064-1/sample_rate);
 t_s = [1:length(mesg)*8*sample_rate/bit_rate-1]*1/sample_rate;
-t_s = [1:length(data)]*1/sample_rate;
+%t_s = [1:length(data)]*1/sample_rate;
 mesg_bits = dec2bin(mesg);
 mesg_bits_T = transpose(mesg_bits);
 sig_sample = zeros(size(t_s));
@@ -42,7 +42,7 @@ f2_hz = f_center_hz + f_dev;
 
 
 %% create transmit signal
-if(false)
+if(true)
     
     for i = (1:length(t_s))
       if mesg_bits_T(round(i/(sample_rate/bit_rate)+0.5)) == '0'
@@ -57,7 +57,14 @@ if(false)
 
     sig_sample = sig_sample + noise_pwr*randn(size(t_s));
 end
-sig_sample = data';
+%sig_sample = data';
+
+%write transmit signal to a 16 bit signed csv file at full amplitude
+
+sim_dat = round(sig_sample/max(abs(sig_sample))*2^15);
+
+csvwrite('../app/src/main/res/raw/sim_dat.csv',sim_dat')
+
 
 %% Create and apply rx filter
 % figure(3)
@@ -98,6 +105,10 @@ plot(20*log10(abs(fft(filt_h))))
 i_dat_filt = filter(filt_h, 1, [i_dat,zeros(1,iq_filt_len/2)]);
 q_dat_filt = filter(filt_h, 1, [q_dat,zeros(1,iq_filt_len/2)]);
 
+%i_dat_filt = load('Idat.csv');
+%q_dat_filt = load('Qdat.csv');
+%t_s = [1:length(i_dat_filt)]*1/sample_rate;
+
 %% pull frequency out of IQ data
 phase = atan(q_dat_filt./i_dat_filt);
 
@@ -109,7 +120,10 @@ for i = 1: length(t_s)
     end
 end
 
-phase2= atan2(q_dat_filt,i_dat_filt);
+%phase2= atan2(q_dat_filt,i_dat_filt);
+
+phase2 = load('Phase.csv');
+t_s = [1:length(i_dat_filt)]*1/sample_rate;
 
 unwrapped_phase = unwrap(phase2);
 
@@ -119,15 +133,17 @@ freq_dat = diff(unwrapped_phase)*sample_rate/(2*pi);
 freq_dat = conv(freq_dat,ones(1,round(sample_rate/bit_rate))*1/round(sample_rate/bit_rate));
 
 %% detection
+if(false)
+    
+    osr = sample_rate/bit_rate ;
+    initial_delay = (iq_filt_len/2) + osr/2 ;
 
-osr = sample_rate/bit_rate ;
-initial_delay = (iq_filt_len/2) + osr/2 ;
 
-
-rx_bits = zeros(1,length(mesg_bits_T(:)));
-for i = 1: length(rx_bits)
-    next_sample = round(initial_delay + osr*(i-1));
-    rx_bits(i) = (freq_dat(next_sample)/f_dev) > 0;
+    rx_bits = zeros(1,length(mesg_bits_T(:)));
+    for i = 1: length(rx_bits)
+        next_sample = round(initial_delay + osr*(i-1));
+        rx_bits(i) = (freq_dat(next_sample)/f_dev) > 0;
+    end
 end
 
 
